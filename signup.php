@@ -8,17 +8,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   $username = $_POST["username"];
   $password = $_POST["password"];
   $cpassword = $_POST["cpassword"];
-  $exist = false;
+  // $exist = false;
+  //Check If User Already Exists
 
-  if (($password == $cpassword) && $exist == false) {
-    $sql = "INSERT INTO `user` (`username`, `password`, `dt`) VALUES ('$username', '$password', current_timestamp())";
-    $result = mysqli_query($conn, $sql);
+  $existSql = "SELECT * FROM `user` WHERE username = '$username'";
+  $result = mysqli_query($conn, $existSql);
+  $numRows = mysqli_num_rows($result);
 
-    if ($result) {
-      $showAlert = true;
+  if ($numRows > 0) {
+    // $exist = true;
+    $showError = "User Already Exists";
+  } else {
+    // $exist = false;
+    if ($password == $cpassword) {
+      $hash = password_hash($password, PASSWORD_DEFAULT);
+      $sql = "INSERT INTO `user` (`username`, `password`, `dt`) VALUES ('$username', '$hash', current_timestamp())";
+      $result = mysqli_query($conn, $sql);
+
+      if ($result) {
+        $showAlert = true;
+      }
+    } else {
+      $showError = "Passwords do not match";
     }
-  }else {
-    $showError = "passwords do not match";
   }
 }
 ?>
@@ -46,7 +58,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
   if ($showError) {
     echo '<div class="alert alert-danger alert-dismissible fade show" role="alert">
-    <strong>Error!</strong> '. $showError .' "
+    <strong>Error!</strong> ' . $showError . '
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   </div>';
   }
@@ -61,7 +73,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
       <div class="mb-3">
         <label for="username" class="form-label">Username</label>
-        <input type="text" class="form-control" name="username" id="exampleFormControlInput1" placeholder="Enter Username">
+        <input type="text" maxlength="11" class="form-control" name="username" id="exampleFormControlInput1" placeholder="Enter Username">
       </div>
 
       <label for="password" class="form-label">Password</label>
